@@ -135,13 +135,6 @@ body {
 }
 
 /* Code tabs */
-.code-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
 .code-annotation {
   font-size: 12px;
   line-height: 1.6;
@@ -208,16 +201,3 @@ pre[class*="language-"] {
 
 .demo-open-btn:hover { background: #2ea043; }
 
-/* Placeholder */
-#placeholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  color: #8b949e;
-  gap: 8px;
-}
-
-#placeholder .big { font-size: 40px; }
-#placeholder p    { font-size: 13px; }

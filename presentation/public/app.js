@@ -37,10 +37,18 @@ async function loadSlide(id, color, liEl) {
   liEl.classList.add('active');
   liEl.style.borderLeftColor = color;
 
-  const res = await fetch(`/slides/${id}.json`);
-  const slide = await res.json();
-  currentSlide = slide;
-  renderTab(currentTab);
+  try {
+    const res = await fetch(`/slides/${id}.json`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const slide = await res.json();
+    currentSlide = slide;
+    renderTab(currentTab);
+  } catch (err) {
+    document.getElementById('tab-explain').innerHTML =
+      `<p style="color:#f85149;padding:24px">Failed to load slide: ${escHtml(err.message)}</p>`;
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-explain').classList.add('active');
+  }
 }
 
 function renderTab(tab) {
