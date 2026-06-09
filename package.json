@@ -1,0 +1,15 @@
+{
+  "name": "owasp-teaching-tool",
+  "private": true,
+  "workspaces": [
+    "presentation",
+    "vulnerable-app"
+  ],
+  "scripts": {
+    "start": "concurrently \"npm run start --workspace=presentation\" \"npm run start --workspace=vulnerable-app\"",
+    "test": "npm run test --workspace=vulnerable-app"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

@@ -1,0 +1,4 @@
+node_modules/
+vulnerable-app/data.db
+vulnerable-app/exfil.log
+.superpowers/
