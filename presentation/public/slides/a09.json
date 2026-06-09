@@ -1,0 +1,22 @@
+{
+  "code": "A09",
+  "title": "Security Logging & Monitoring Failures",
+  "badgeColor": "#388bfd",
+  "explain": {
+    "what": "Sensitive actions happen with no audit trail. If an attacker transfers money, deletes records, or escalates privileges, there is no log to detect it, investigate it, or prove it happened.",
+    "example": "Transfer $500 from account 1 to account 2 using the vulnerable endpoint. Then check the audit log — it is empty. The fixed endpoint writes every transfer to the log.",
+    "impact": "Attacks go undetected for months · no forensics after a breach · regulatory non-compliance"
+  },
+  "vulnerable": {
+    "filename": "routes/a09-logging.js",
+    "annotation": "⚠ The transfer succeeds but nothing is written to the audit log.",
+    "code": "router.post('/vulnerable/transfer', (req, res) => {\n  const { fromId, toId, amount } = req.body;\n  const from = db.prepare('SELECT * FROM accounts WHERE id=?').get(fromId);\n  if (!from || from.balance < amount)\n    return res.status(400).json({ error: 'Insufficient funds' });\n\n  db.prepare('UPDATE accounts SET balance=balance-? WHERE id=?').run(amount, fromId);\n  db.prepare('UPDATE accounts SET balance=balance+? WHERE id=?').run(amount, toId);\n\n  // ⚠ No audit log entry written\n  res.json({ success: true });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a09-logging.js",
+    "annotation": "✅ Every transfer — successful or failed — writes a timestamped entry to the audit_log table.",
+    "code": "router.post('/fixed/transfer', (req, res) => {\n  const { fromId, toId, amount } = req.body;\n  const from = db.prepare('SELECT * FROM accounts WHERE id=?').get(fromId);\n\n  if (!from || from.balance < amount) {\n    db.prepare(\n      'INSERT INTO audit_log (timestamp,action,user_id,details) VALUES (?,?,?,?)'\n    ).run(new Date().toISOString(), 'TRANSFER_FAILED', fromId,\n      `Insufficient funds: tried $${amount}`);\n    return res.status(400).json({ error: 'Insufficient funds' });\n  }\n\n  db.prepare('UPDATE accounts SET balance=balance-? WHERE id=?').run(amount, fromId);\n  db.prepare('UPDATE accounts SET balance=balance+? WHERE id=?').run(amount, toId);\n  db.prepare(\n    'INSERT INTO audit_log (timestamp,action,user_id,details) VALUES (?,?,?,?)'\n  ).run(new Date().toISOString(), 'TRANSFER_OK', fromId,\n    `Transferred $${amount} → account ${toId}`);\n\n  res.json({ success: true });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a09",
+  "demoHint": "Transfer money using vulnerable (no log), then transfer using fixed (logged). Compare the audit log before and after."
+}

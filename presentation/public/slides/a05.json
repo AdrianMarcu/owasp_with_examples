@@ -1,0 +1,22 @@
+{
+  "code": "A05",
+  "title": "Injection",
+  "badgeColor": "#f85149",
+  "explain": {
+    "what": "User input is pasted directly into a SQL query. The database cannot tell the difference between data and commands, so the attacker's input becomes part of the query logic.",
+    "example": "Search for <code>' OR '1'='1</code> — the query becomes <code>WHERE name LIKE '%' OR '1'='1'%'</code> which is always true, returning every row in the table including secret data.",
+    "impact": "Full database dump · authentication bypass · data deletion (<code>'; DROP TABLE users;--</code>)"
+  },
+  "vulnerable": {
+    "filename": "routes/a05-injection.js",
+    "annotation": "⚠ The search term is concatenated directly into the SQL string. The attacker controls the query.",
+    "code": "router.get('/vulnerable/search', (req, res) => {\n  const q = req.query.q || '';\n  // ⚠ String concatenation — attacker controls SQL\n  const sql = `SELECT * FROM products WHERE name LIKE '%${q}%'`;\n  try {\n    const results = db.prepare(sql).all();\n    res.json({ query: sql, results });\n  } catch (err) {\n    res.status(500).json({ error: err.message, query: sql });\n  }\n});"
+  },
+  "fixed": {
+    "filename": "routes/a05-injection.js",
+    "annotation": "✅ Parameterized query: the ? placeholder is handled by the database driver, which treats user input as data — never as SQL.",
+    "code": "router.get('/fixed/search', (req, res) => {\n  const q = req.query.q || '';\n  // ✅ Parameterized — user input is data, not SQL\n  const results = db.prepare(\n    'SELECT id, name, price FROM products WHERE name LIKE ?'\n  ).all(`%${q}%`);\n  res.json({ results });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a05",
+  "demoHint": "Search for a product name normally first. Then try: ' OR '1'='1 — and watch all rows including secret data appear."
+}

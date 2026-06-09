@@ -1,0 +1,22 @@
+{
+  "code": "A01",
+  "title": "Broken Access Control",
+  "badgeColor": "#f85149",
+  "explain": {
+    "what": "A user can access data or actions that belong to another user or require higher privileges. The server checks <code>who</code> is logged in, but not <code>what</code> they are allowed to touch.",
+    "example": "You log in as Alice. Your invoice is at <code>/invoice/1</code>. You change it to <code>/invoice/2</code> and read Bob's private $2,500 invoice.",
+    "impact": "Data theft · privilege escalation · account takeover · #1 most common vulnerability in OWASP 2026"
+  },
+  "vulnerable": {
+    "filename": "routes/a01-access-control.js",
+    "annotation": "⚠ The server confirms you are logged in (x-user-id header) but never checks whether the invoice belongs to you.",
+    "code": "router.get('/vulnerable/invoice/:id', (req, res) => {\n  const userId = parseInt(req.headers['x-user-id']);\n  if (!userId) return res.status(401).json({ error: 'Not logged in' });\n\n  const invoice = db.prepare(\n    'SELECT * FROM invoices WHERE id = ?'\n  ).get(req.params.id);\n\n  if (!invoice) return res.status(404).json({ error: 'Not found' });\n\n  // ⚠ No ownership check — any user can read any invoice\n  res.json(invoice);\n});"
+  },
+  "fixed": {
+    "filename": "routes/a01-access-control.js",
+    "annotation": "✅ After fetching the invoice, we verify the owner matches the logged-in user. Mismatches return 403 Forbidden.",
+    "code": "router.get('/fixed/invoice/:id', (req, res) => {\n  const userId = parseInt(req.headers['x-user-id']);\n  if (!userId) return res.status(401).json({ error: 'Not logged in' });\n\n  const invoice = db.prepare(\n    'SELECT * FROM invoices WHERE id = ?'\n  ).get(req.params.id);\n\n  if (!invoice) return res.status(404).json({ error: 'Not found' });\n\n  // ✅ Ownership check\n  if (invoice.user_id !== userId)\n    return res.status(403).json({ error: 'Forbidden' });\n\n  res.json(invoice);\n});"
+  },
+  "demoUrl": "http://localhost:4000/a01",
+  "demoHint": "Log in as Alice (user 1), then change the invoice ID in the URL to 2 or 3 to read Bob's and Admin's private invoices."
+}

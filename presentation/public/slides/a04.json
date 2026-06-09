@@ -1,0 +1,22 @@
+{
+  "code": "A04",
+  "title": "Cryptographic Failures",
+  "badgeColor": "#1f6feb",
+  "explain": {
+    "what": "Sensitive data — especially passwords — is protected with a weak or broken algorithm. MD5 and SHA-1 are not password hashing algorithms. They are fast by design, which makes them easy to brute-force.",
+    "example": "Register with password 'password123'. The server stores its MD5 hash. An attacker who dumps your database can crack every hash in seconds using rainbow tables or GPU brute force.",
+    "impact": "Mass credential breach · account takeover across every service where users reuse passwords"
+  },
+  "vulnerable": {
+    "filename": "routes/a04-crypto.js",
+    "annotation": "⚠ Passwords are hashed with MD5 — a fast hash designed for checksums, not passwords. Crackable in milliseconds.",
+    "code": "const crypto = require('crypto');\nconst md5 = s => crypto.createHash('md5').update(s).digest('hex');\n\nrouter.post('/vulnerable/register', (req, res) => {\n  const { username, password } = req.body;\n  const hash = md5(password); // ⚠ MD5 is not a password hash\n  db.prepare(\n    'INSERT INTO users (username, password_md5) VALUES (?, ?)'\n  ).run(username, hash);\n  res.json({ stored_hash: hash, algorithm: 'MD5' });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a04-crypto.js",
+    "annotation": "✅ bcrypt with cost factor 12 is designed for passwords — deliberately slow, salted, and resistant to GPU attacks.",
+    "code": "const bcrypt = require('bcrypt');\n\nrouter.post('/fixed/register', async (req, res) => {\n  const { username, password } = req.body;\n  // ✅ cost=12 means ~250ms per hash — slow enough to deter brute force\n  const hash = await bcrypt.hash(password, 12);\n  db.prepare(\n    'INSERT INTO users (username, password_bcrypt) VALUES (?, ?)'\n  ).run(username, hash);\n  res.json({ algorithm: 'bcrypt (cost 12)', note: 'Hash not returned to client' });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a04",
+  "demoHint": "Register with any password. See the MD5 hash stored in the database, then paste it into crackstation.net to crack it instantly."
+}

@@ -1,0 +1,22 @@
+{
+  "code": "A10",
+  "title": "Mishandling of Exceptional Conditions",
+  "badgeColor": "#3fb950",
+  "explain": {
+    "what": "When an error occurs during authentication or authorization, the code catches it and silently continues — granting access instead of denying it. This is called 'fail-open'.",
+    "example": "The token validation service throws an error for a malformed token. The catch block logs the error but never returns a denial response — so the server replies with 'Access granted' anyway.",
+    "impact": "Authentication bypass · unauthorized access · attackers deliberately trigger errors to gain entry"
+  },
+  "vulnerable": {
+    "filename": "routes/a10-error-handling.js",
+    "annotation": "⚠ The catch block handles the auth error but then falls through to the success response.",
+    "code": "router.post('/vulnerable/access', (req, res) => {\n  const { token } = req.body;\n  let authorized = false;\n\n  try {\n    if (!token || token.length < 20)\n      throw new Error('Auth service unavailable');\n    authorized = true; // only set if token is valid\n  } catch (err) {\n    // ⚠ Error is caught and swallowed\n    // authorized is still false — but the response below\n    // always sends success regardless!\n    console.error('Auth error:', err.message);\n  }\n\n  // ⚠ Bug: responds success even when authorized=false\n  res.json({ access: 'granted', note: 'Auth error was swallowed!' });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a10-error-handling.js",
+    "annotation": "✅ Any auth exception triggers an explicit denial. Fail closed — when in doubt, deny.",
+    "code": "router.post('/fixed/access', (req, res) => {\n  const { token } = req.body;\n\n  try {\n    if (!token || token.length < 20)\n      throw new Error('Auth service unavailable');\n    // Token is valid\n    res.json({ access: 'granted' });\n  } catch (err) {\n    // ✅ Fail closed — auth error means deny, always\n    console.error('Auth error:', err.message);\n    res.status(503).json({\n      error: 'Authentication service unavailable. Access denied.'\n    });\n  }\n});"
+  },
+  "demoUrl": "http://localhost:4000/a10",
+  "demoHint": "Submit a short (invalid) token. Vulnerable grants access anyway. Fixed returns 503 and denies."
+}

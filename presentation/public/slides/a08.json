@@ -1,0 +1,22 @@
+{
+  "code": "A08",
+  "title": "Software & Data Integrity Failures",
+  "badgeColor": "#8957e5",
+  "explain": {
+    "what": "The server executes untrusted user input as code. eval() evaluates any JavaScript string — including system commands, file reads, or infinite loops.",
+    "example": "A calculator endpoint uses eval() on the formula you type. Instead of '2+2', send <code>require('fs').readdirSync('/')</code> to list the server's root directory.",
+    "impact": "Remote code execution · full server compromise · data exfiltration · denial of service"
+  },
+  "vulnerable": {
+    "filename": "routes/a08-integrity.js",
+    "annotation": "⚠ eval() executes any JavaScript the user sends — not just math expressions.",
+    "code": "router.post('/vulnerable/calculate', (req, res) => {\n  const { formula } = req.body;\n  try {\n    // ⚠ eval() runs ANY JavaScript, not just math\n    const result = eval(formula);\n    res.json({ result: String(result) });\n  } catch (err) {\n    res.status(400).json({ error: err.message });\n  }\n});"
+  },
+  "fixed": {
+    "filename": "routes/a08-integrity.js",
+    "annotation": "✅ Whitelist validation rejects anything that is not a basic arithmetic expression before it reaches eval().",
+    "code": "router.post('/fixed/calculate', (req, res) => {\n  const { formula } = req.body;\n  // ✅ Whitelist: only digits, spaces, and arithmetic operators\n  if (!/^[\\d\\s+\\-*/().]+$/.test(formula)) {\n    return res.status(400).json({\n      error: 'Invalid formula. Only numbers and + - * / ( ) allowed.'\n    });\n  }\n  try {\n    const result = eval(formula);\n    res.json({ result });\n  } catch (err) {\n    res.status(400).json({ error: 'Invalid expression' });\n  }\n});"
+  },
+  "demoUrl": "http://localhost:4000/a08",
+  "demoHint": "Try a normal formula like 2+2. Then try: require('fs').readdirSync('.').join(', ') — and see the server's directory listing."
+}

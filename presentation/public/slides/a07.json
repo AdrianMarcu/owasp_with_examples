@@ -1,0 +1,22 @@
+{
+  "code": "A07",
+  "title": "Identification & Authentication Failures",
+  "badgeColor": "#e36209",
+  "explain": {
+    "what": "The login endpoint has no protection against automated attacks. An attacker can try thousands of username/password combinations per second until one works.",
+    "example": "With no rate limiting, a script can attempt 1,000 logins per second. A 6-character lowercase password has 300 million combinations — crackable in under 5 minutes.",
+    "impact": "Account takeover · credential stuffing across multiple services · complete breach of user data"
+  },
+  "vulnerable": {
+    "filename": "routes/a07-auth-failures.js",
+    "annotation": "⚠ No rate limiting, no lockout, no delay. An attacker can hammer this endpoint as fast as their network allows.",
+    "code": "router.post('/vulnerable/login', (req, res) => {\n  const { username, password } = req.body;\n  const md5 = s => require('crypto').createHash('md5').update(s).digest('hex');\n\n  // ⚠ No rate limit, no lockout, no CAPTCHA\n  const user = db.prepare(\n    'SELECT * FROM users WHERE username=? AND password_md5=?'\n  ).get(username, md5(password));\n\n  if (user) res.json({ success: true, userId: user.id });\n  else res.status(401).json({ error: 'Invalid credentials' });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a07-auth-failures.js",
+    "annotation": "✅ express-rate-limit blocks the IP after 5 failed attempts in 15 minutes.",
+    "code": "const rateLimit = require('express-rate-limit');\n\nconst loginLimiter = rateLimit({\n  windowMs: 15 * 60 * 1000, // 15 minutes\n  max: 5,\n  message: { error: 'Too many attempts. Try again in 15 minutes.' }\n});\n\nrouter.post('/fixed/login', loginLimiter, (req, res) => {\n  const { username, password } = req.body;\n  const md5 = s => require('crypto').createHash('md5').update(s).digest('hex');\n  const user = db.prepare(\n    'SELECT * FROM users WHERE username=? AND password_md5=?'\n  ).get(username, md5(password));\n\n  if (user) res.json({ success: true, userId: user.id });\n  else res.status(401).json({ error: 'Invalid credentials' });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a07",
+  "demoHint": "Use the brute-force simulator to send 20 rapid login attempts. Against vulnerable: all go through. Against fixed: blocked after 5."
+}

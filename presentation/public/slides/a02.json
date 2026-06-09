@@ -1,0 +1,22 @@
+{
+  "code": "A02",
+  "title": "Security Misconfiguration",
+  "badgeColor": "#d29922",
+  "explain": {
+    "what": "The server is set up in a way that leaks internal information or allows unauthorized access. Common causes: default credentials left unchanged, verbose error pages, unnecessary admin endpoints exposed.",
+    "example": "Triggering any error causes the server to return the full stack trace, the server's file paths, and all environment variables — including database passwords and API keys.",
+    "impact": "Information disclosure · unauthorized admin access · credential theft from leaked env vars"
+  },
+  "vulnerable": {
+    "filename": "routes/a02-misconfiguration.js",
+    "annotation": "⚠ The catch block returns the full error stack and process.env to the client.",
+    "code": "router.get('/vulnerable/data', (req, res) => {\n  try {\n    // Simulate a misconfigured JSON parse\n    JSON.parse(undefined);\n  } catch (err) {\n    // ⚠ Leaks stack trace + all environment variables\n    res.status(500).json({\n      error: err.message,\n      stack: err.stack,\n      env: process.env\n    });\n  }\n});"
+  },
+  "fixed": {
+    "filename": "routes/a02-misconfiguration.js",
+    "annotation": "✅ Log the error server-side only. Return a generic message to the client.",
+    "code": "router.get('/fixed/data', (req, res) => {\n  try {\n    JSON.parse(undefined);\n  } catch (err) {\n    // ✅ Log internally, never send details to client\n    console.error('Internal error:', err);\n    res.status(500).json({ error: 'Something went wrong. Please try again.' });\n  }\n});"
+  },
+  "demoUrl": "http://localhost:4000/a02",
+  "demoHint": "Click 'Trigger Error' to see what the vulnerable server leaks. Then compare with the fixed version."
+}

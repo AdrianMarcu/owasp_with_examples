@@ -1,0 +1,22 @@
+{
+  "code": "A06",
+  "title": "Insecure Design",
+  "badgeColor": "#da3633",
+  "explain": {
+    "what": "The business logic has a flaw built into the design — not just a coding mistake. No amount of patching the implementation will fix it without redesigning the feature.",
+    "example": "The coupon system allows any coupon to be applied as many times as you want to the same order. Click 'Apply SAVE10' 100 times and get 1000% off.",
+    "impact": "Financial fraud · inventory abuse · SLA gaming — anything where business rules are not enforced server-side"
+  },
+  "vulnerable": {
+    "filename": "routes/a06-insecure-design.js",
+    "annotation": "⚠ The coupon is applied without checking how many times it has been used or whether it was already applied to this order.",
+    "code": "router.post('/vulnerable/apply-coupon', (req, res) => {\n  const { orderId, code } = req.body;\n  const coupon = db.prepare(\n    'SELECT * FROM coupons WHERE code = ?'\n  ).get(code);\n  if (!coupon) return res.status(404).json({ error: 'Invalid coupon' });\n\n  // ⚠ No check on max_uses or duplicate application\n  db.prepare(\n    'UPDATE orders SET discount = discount + ? WHERE id = ?'\n  ).run(coupon.discount_percent, orderId);\n\n  res.json({ applied: coupon.discount_percent });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a06-insecure-design.js",
+    "annotation": "✅ Enforce max_uses and prevent duplicate application in the same transaction.",
+    "code": "router.post('/fixed/apply-coupon', (req, res) => {\n  const { orderId, code } = req.body;\n  const coupon = db.prepare(\n    'SELECT * FROM coupons WHERE code = ?'\n  ).get(code);\n  if (!coupon) return res.status(404).json({ error: 'Invalid coupon' });\n\n  // ✅ Check usage limit\n  if (coupon.times_used >= coupon.max_uses)\n    return res.status(400).json({ error: 'Coupon has expired' });\n\n  // ✅ Check already used on this order\n  const used = db.prepare(\n    'SELECT 1 FROM coupon_usages WHERE order_id=? AND coupon_id=?'\n  ).get(orderId, coupon.id);\n  if (used) return res.status(400).json({ error: 'Already applied' });\n\n  db.prepare('UPDATE coupons SET times_used=times_used+1 WHERE id=?').run(coupon.id);\n  db.prepare('INSERT INTO coupon_usages VALUES (?,?)').run(orderId, coupon.id);\n  db.prepare('UPDATE orders SET discount=discount+? WHERE id=?').run(coupon.discount_percent, orderId);\n\n  res.json({ applied: coupon.discount_percent });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a06",
+  "demoHint": "Apply coupon SAVE10 on order 1 — then apply it again, and again. Watch the discount grow without limit."
+}

@@ -1,0 +1,22 @@
+{
+  "code": "A03",
+  "title": "Software Supply Chain Failures",
+  "badgeColor": "#8957e5",
+  "explain": {
+    "what": "A third-party package you installed from npm runs malicious code inside your server. Your own code is clean — but a dependency is not. You trusted the supply chain without verifying it.",
+    "example": "You install an 'analytics' package. It looks harmless in the README. But inside it silently reads your environment variables and writes them to a log file — simulating data exfiltration to an attacker's server.",
+    "impact": "Secret / credential theft · backdoors · full server compromise · SolarWinds and XZ Utils are real-world examples"
+  },
+  "vulnerable": {
+    "filename": "routes/a03-supply-chain.js",
+    "annotation": "⚠ The app requires 'evil-analytics'. Calling track() also exfiltrates env vars to exfil.log.",
+    "code": "const analytics = require('../packages/evil-analytics');\n\nrouter.post('/vulnerable/purchase', (req, res) => {\n  const { userId, amount } = req.body;\n\n  // Looks like normal tracking...\n  // But evil-analytics also writes env vars to exfil.log\n  analytics.track('purchase', { userId, amount });\n\n  res.json({ success: true, message: 'Purchase recorded' });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a03-supply-chain.js",
+    "annotation": "✅ Remove the unverified dependency. Log internally with a trusted, minimal implementation.",
+    "code": "// ✅ No third-party analytics package\nrouter.post('/fixed/purchase', (req, res) => {\n  const { userId, amount } = req.body;\n\n  // Minimal trusted logging — no external dependency\n  console.log(`[purchase] userId=${userId} amount=${amount}`);\n\n  res.json({ success: true, message: 'Purchase recorded' });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a03",
+  "demoHint": "Click 'Track Purchase' then check the Exfiltration Log to see what the evil-analytics package secretly captured."
+}
