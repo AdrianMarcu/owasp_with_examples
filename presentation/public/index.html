@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OWASP Top 10 — 2026</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+  <div id="app">
+    <aside id="sidebar">
+      <div id="sidebar-header">
+        <div class="sidebar-title">OWASP Top 10</div>
+        <div class="sidebar-sub">2026 Edition</div>
+      </div>
+      <ul id="vuln-list"></ul>
+    </aside>
+    <main id="main">
+      <div id="tab-bar">
+        <button class="tab-btn active" data-tab="explain">📖 Explain</button>
+        <button class="tab-btn" data-tab="vulnerable">❌ Vulnerable</button>
+        <button class="tab-btn" data-tab="fixed">✅ Fixed</button>
+        <button class="tab-btn" data-tab="demo">▶ Live Demo</button>
+      </div>
+      <div id="tab-content">
+        <div id="tab-explain" class="tab-panel active"></div>
+        <div id="tab-vulnerable" class="tab-panel"></div>
+        <div id="tab-fixed" class="tab-panel"></div>
+        <div id="tab-demo" class="tab-panel"></div>
+      </div>
+    </main>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
