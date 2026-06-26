@@ -1,0 +1,22 @@
+{
+  "code": "A12",
+  "title": "Second-Order Injection",
+  "badgeColor": "#f0883e",
+  "explain": {
+    "what": "User input is safely stored using a parameterized query. Later, that same stored value is retrieved from the database and concatenated into a new SQL query. Because it came from the database, it <em>feels</em> trusted — but it was user-controlled at write time.",
+    "example": "Save the filter <code>' UNION SELECT id, username, password_md5 FROM users--</code>. The save uses a parameterized query — no injection. Then click Run. The retrieval step drops the stored value into a raw SQL string. The union executes and returns the users table.",
+    "impact": "Full database read · credential theft · privilege escalation · hard to catch in code review because the injection point and the dangerous use are in separate endpoints"
+  },
+  "vulnerable": {
+    "filename": "routes/a12-second-order.js",
+    "annotation": "⚠ The save step is safe. The run step treats database-retrieved data as trusted SQL — but that data was written by the user.",
+    "code": "router.post('/vulnerable/save', (req, res) => {\n  const userId = parseInt(req.headers['x-user-id']) || 1;\n  const { q } = req.body;\n  // Safe — parameterized. Looks correct.\n  db.prepare('INSERT OR REPLACE INTO saved_searches (user_id, query) VALUES (?, ?)')\n    .run(userId, q);\n  res.json({ saved: true });\n});\n\nrouter.get('/vulnerable/run', (req, res) => {\n  const userId = parseInt(req.headers['x-user-id']) || 1;\n  const saved = db.prepare(\n    'SELECT query FROM saved_searches WHERE user_id = ?'\n  ).get(userId);\n\n  // ⚠ 'saved.query' came from the database — feels trusted.\n  // But the user wrote it. This is second-order injection.\n  const results = db.prepare(\n    `SELECT id, name, price FROM products WHERE name LIKE '%${saved.query}%'`\n  ).all();\n  res.json({ results });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a12-second-order.js",
+    "annotation": "✅ Even data retrieved from your own database must be treated as untrusted when used in a new query. Always parameterize.",
+    "code": "router.get('/fixed/run', (req, res) => {\n  const userId = parseInt(req.headers['x-user-id']) || 1;\n  const saved = db.prepare(\n    'SELECT query FROM saved_searches WHERE user_id = ?'\n  ).get(userId);\n\n  // ✅ Parameterized — the stored value is data, not SQL,\n  // regardless of where it came from.\n  const results = db.prepare(\n    'SELECT id, name, price FROM products WHERE name LIKE ?'\n  ).all(`%${saved.query}%`);\n  res.json({ results });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a12",
+  "demoHint": "Save a filter. Run it. What happens if the filter contains SQL?"
+}
