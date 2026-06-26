@@ -8,34 +8,71 @@ module.exports = function (db) {
   const router = express.Router();
 
   router.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>A04 Demo</title>
-<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px}
-h1{color:#1f6feb}button{background:#238636;color:#fff;border:none;padding:8px 16px;
-cursor:pointer;border-radius:4px;margin:4px}input{background:#21262d;color:#e6edf3;
-border:1px solid #30363d;padding:6px;border-radius:4px;width:140px}
-pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px}</style></head>
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A04 — Cryptographic Failures</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
 <body>
-<h1>A04 — Cryptographic Failures</h1>
-<p>Username: <input id="u" value="testuser"> Password: <input id="p" value="password123" type="password"></p>
-<button onclick="reg('vulnerable')">Register (Vulnerable MD5)</button>
-<button onclick="reg('fixed')" style="background:#1f6feb">Register (Fixed bcrypt)</button>
-<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
-<div id="out"></div>
+<div class="page">
+  <div class="demo-header" style="--color:#1f6feb">
+    <span class="demo-badge" style="background:#1f6feb">A04</span>
+    <span class="demo-title">Cryptographic Failures</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-label">What is it?</div><p id="card-what"></p></div>
+    <div class="card"><div class="card-label">The Attack</div><p id="card-example"></p></div>
+    <div class="card"><div class="card-label">Impact</div><p id="card-impact"></p></div>
+  </div>
+  <div class="demo-section">
+    <div class="demo-section-label">Live Demo — register and compare what the server stores</div>
+    <div class="controls">
+      <input class="input" id="u" value="testuser" placeholder="Username" style="width:120px">
+      <input class="input" id="p" value="password123" type="password" placeholder="Password" style="width:120px">
+      <button class="btn btn-vuln" onclick="register('vulnerable')">Register (Vulnerable MD5)</button>
+      <button class="btn btn-fixed" onclick="register('fixed')">Register (Fixed bcrypt)</button>
+      <button class="btn btn-reset" onclick="resetDemo()">🔄 Reset Demo</button>
+    </div>
+    <div class="output" id="out">
+      <div class="output-status"><span class="status-badge" id="status-badge"></span></div>
+      <pre id="output-body"></pre>
+    </div>
+  </div>
+</div>
 <script>
-async function reg(mode) {
-  const r = await fetch('/a04/'+mode+'/register', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({username:document.getElementById('u').value+'_'+Date.now(), password:document.getElementById('p').value})
+fetch('/slides/a04.json').then(r=>r.json()).then(s=>{
+  document.getElementById('card-what').innerHTML=s.explain.what;
+  document.getElementById('card-example').innerHTML=s.explain.example;
+  document.getElementById('card-impact').innerHTML=s.explain.impact;
+});
+function showOutput(status,data){
+  const out=document.getElementById('out');
+  const badge=document.getElementById('status-badge');
+  const body=document.getElementById('output-body');
+  const ok=status>=200&&status<300;
+  badge.textContent=status+' '+(ok?'✓':'✗');
+  badge.className='status-badge '+(ok?'ok':'err');
+  body.textContent=JSON.stringify(data,null,2);
+  out.style.display='block';
+}
+async function resetDemo(){
+  await fetch('/reset',{method:'POST'});
+  document.getElementById('out').style.display='none';
+}
+async function register(endpoint){
+  const r=await fetch('/a04/'+endpoint+'/register',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({username:document.getElementById('u').value+'_'+Date.now(),password:document.getElementById('p').value})
   });
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p>Mode: <strong>'+mode+'</strong></p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function resetDemo() {
-  await fetch('/reset', { method: 'POST' });
-  document.getElementById('out').innerHTML =
-    '<p style="color:#7ee787">Demo state reset.</p>';
-}
-</script></body></html>`);
+</script>
+</body>
+</html>`);
   });
 
   router.post('/vulnerable/register', (req, res) => {

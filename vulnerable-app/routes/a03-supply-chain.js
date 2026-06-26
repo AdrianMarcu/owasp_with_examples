@@ -9,39 +9,75 @@ module.exports = function () {
   const router = express.Router();
 
   router.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>A03 Demo</title>
-<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px}
-h1{color:#8957e5}button{background:#238636;color:#fff;border:none;padding:8px 16px;
-cursor:pointer;border-radius:4px;margin:4px}pre{background:#161b22;padding:12px;
-border-radius:4px;margin-top:12px;overflow:auto;max-height:400px}</style></head>
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A03 — Supply Chain Failures</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
 <body>
-<h1>A03 — Supply Chain Failures</h1>
-<p>The app uses <code>evil-analytics</code> — an npm package that looks harmless.</p>
-<button onclick="purchase('vulnerable')">Track Purchase (Vulnerable)</button>
-<button onclick="purchase('fixed')" style="background:#1f6feb">Track Purchase (Fixed)</button>
-<button onclick="showLog()" style="background:#6e40c9">Show Exfiltration Log</button>
-<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
-<div id="out"></div>
+<div class="page">
+  <div class="demo-header" style="--color:#8957e5">
+    <span class="demo-badge" style="background:#8957e5">A03</span>
+    <span class="demo-title">Supply Chain Failures</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-label">What is it?</div><p id="card-what"></p></div>
+    <div class="card"><div class="card-label">The Attack</div><p id="card-example"></p></div>
+    <div class="card"><div class="card-label">Impact</div><p id="card-impact"></p></div>
+  </div>
+  <div class="demo-section">
+    <div class="demo-section-label">Live Demo — the app uses evil-analytics, a package that phones home</div>
+    <div class="controls">
+      <button class="btn btn-vuln" onclick="purchase('vulnerable')">Track Purchase (Vulnerable)</button>
+      <button class="btn btn-fixed" onclick="purchase('fixed')">Track Purchase (Fixed)</button>
+      <button class="btn" style="background:#388bfd" onclick="showLog()">Show Exfil Log</button>
+      <button class="btn btn-reset" onclick="resetDemo()">🔄 Reset Demo</button>
+    </div>
+    <div class="output" id="out">
+      <div class="output-status"><span class="status-badge" id="status-badge"></span></div>
+      <pre id="output-body"></pre>
+    </div>
+  </div>
+</div>
 <script>
-async function purchase(mode) {
-  const r = await fetch('/a03/'+mode+'/purchase', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({userId:1, amount:99.99})
+fetch('/slides/a03.json').then(r=>r.json()).then(s=>{
+  document.getElementById('card-what').innerHTML=s.explain.what;
+  document.getElementById('card-example').innerHTML=s.explain.example;
+  document.getElementById('card-impact').innerHTML=s.explain.impact;
+});
+function showOutput(status,data){
+  const out=document.getElementById('out');
+  const badge=document.getElementById('status-badge');
+  const body=document.getElementById('output-body');
+  const ok=status>=200&&status<300;
+  badge.textContent=status+' '+(ok?'✓':'✗');
+  badge.className='status-badge '+(ok?'ok':'err');
+  body.textContent=JSON.stringify(data,null,2);
+  out.style.display='block';
+}
+async function resetDemo(){
+  await fetch('/reset',{method:'POST'});
+  document.getElementById('out').style.display='none';
+}
+async function purchase(endpoint){
+  const r=await fetch('/a03/'+endpoint+'/purchase',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({userId:1,amount:99.99})
   });
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p>Mode: <strong>'+mode+'</strong></p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function showLog() {
-  const r = await fetch('/a03/exfil-log');
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p><strong>Exfiltration Log:</strong></p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+async function showLog(){
+  const r=await fetch('/a03/exfil-log');
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function resetDemo() {
-  await fetch('/reset', { method: 'POST' });
-  document.getElementById('out').innerHTML =
-    '<p style="color:#7ee787">Demo state reset.</p>';
-}
-</script></body></html>`);
+</script>
+</body>
+</html>`);
   });
 
   router.post('/vulnerable/purchase', (req, res) => {

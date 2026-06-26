@@ -4,34 +4,69 @@ module.exports = function (db) {
   const router = express.Router();
 
   router.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>A01 Demo</title>
-<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px}
-h1{color:#f85149}button{background:#238636;color:#fff;border:none;padding:8px 16px;
-cursor:pointer;border-radius:4px;margin:4px}pre{background:#161b22;padding:12px;
-border-radius:4px;margin-top:12px}input{background:#21262d;color:#e6edf3;
-border:1px solid #30363d;padding:6px;border-radius:4px;width:60px}</style></head>
+    res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A01 — Broken Access Control</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
 <body>
-<h1>A01 — Broken Access Control (IDOR)</h1>
-<p>You are logged in as <strong>Alice (user 1)</strong>. Your invoice ID is 1.</p>
-<p>Invoice ID to fetch: <input id="iid" value="1">
-  <button onclick="fetch_('/a01/vulnerable/invoice/'+document.getElementById('iid').value,'vulnerable')">Vulnerable</button>
-  <button onclick="fetch_('/a01/fixed/invoice/'+document.getElementById('iid').value,'fixed')" style="background:#1f6feb">Fixed</button>
-<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
-</p>
-<div id="out"></div>
+<div class="page">
+  <div class="demo-header" style="--color:#f85149">
+    <span class="demo-badge" style="background:#f85149">A01</span>
+    <span class="demo-title">Broken Access Control</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-label">What is it?</div><p id="card-what"></p></div>
+    <div class="card"><div class="card-label">The Attack</div><p id="card-example"></p></div>
+    <div class="card"><div class="card-label">Impact</div><p id="card-impact"></p></div>
+  </div>
+  <div class="demo-section">
+    <div class="demo-section-label">Live Demo — you are Alice (user 1), your invoice is #1</div>
+    <div class="controls">
+      <label style="color:#8b949e;font-size:13px">Invoice ID:</label>
+      <input class="input" id="iid" value="1" style="width:60px">
+      <button class="btn btn-vuln" onclick="fetchInvoice('vulnerable')">Vulnerable</button>
+      <button class="btn btn-fixed" onclick="fetchInvoice('fixed')">Fixed</button>
+      <button class="btn btn-reset" onclick="resetDemo()">🔄 Reset Demo</button>
+    </div>
+    <div class="output" id="out">
+      <div class="output-status"><span class="status-badge" id="status-badge"></span></div>
+      <pre id="output-body"></pre>
+    </div>
+  </div>
+</div>
 <script>
-async function fetch_(url, mode) {
-  const r = await fetch(url, { headers: { 'x-user-id': '1' } });
-  const j = await r.json();
-  document.getElementById('out').innerHTML =
-    '<p>Mode: <strong>'+mode+'</strong> | Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+fetch('/slides/a01.json').then(r=>r.json()).then(s=>{
+  document.getElementById('card-what').innerHTML=s.explain.what;
+  document.getElementById('card-example').innerHTML=s.explain.example;
+  document.getElementById('card-impact').innerHTML=s.explain.impact;
+});
+function showOutput(status,data){
+  const out=document.getElementById('out');
+  const badge=document.getElementById('status-badge');
+  const body=document.getElementById('output-body');
+  const ok=status>=200&&status<300;
+  badge.textContent=status+' '+(ok?'✓':'✗');
+  badge.className='status-badge '+(ok?'ok':'err');
+  body.textContent=JSON.stringify(data,null,2);
+  out.style.display='block';
 }
-async function resetDemo() {
-  await fetch('/reset', { method: 'POST' });
-  document.getElementById('out').innerHTML =
-    '<p style="color:#7ee787">Demo state reset.</p>';
+async function resetDemo(){
+  await fetch('/reset',{method:'POST'});
+  document.getElementById('out').style.display='none';
 }
-</script></body></html>`);
+async function fetchInvoice(endpoint){
+  const id=document.getElementById('iid').value;
+  const r=await fetch('/a01/'+endpoint+'/invoice/'+id,{headers:{'x-user-id':'1'}});
+  const j=await r.json();
+  showOutput(r.status,j);
+}
+</script>
+</body>
+</html>`);
   });
 
   router.get('/vulnerable/invoice/:id', (req, res) => {
