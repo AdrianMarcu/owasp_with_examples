@@ -7,6 +7,48 @@ body {
   min-height: 100vh;
 }
 
+/* ── Demo nav ── */
+.demo-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  padding: 8px 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.demo-nav-home {
+  font-size: 12px;
+  color: #8b949e;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.demo-nav-home:hover { color: #e6edf3; }
+
+.demo-nav-pills {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.demo-nav-pill {
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  border-radius: 4px;
+  padding: 3px 7px;
+  text-decoration: none;
+  font-family: monospace;
+  letter-spacing: 0.3px;
+  opacity: 0.4;
+  transition: opacity 0.15s;
+}
+.demo-nav-pill:hover { opacity: 0.8; }
+.demo-nav-pill.active { opacity: 1; }
+
 .page {
   max-width: 960px;
   margin: 0 auto;

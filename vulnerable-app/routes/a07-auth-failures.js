@@ -28,6 +28,21 @@ module.exports = function (db) {
   <link rel="stylesheet" href="/demo.css">
 </head>
 <body>
+<nav class="demo-nav">
+  <a class="demo-nav-home" href="http://localhost:3000">← Dashboard</a>
+  <div class="demo-nav-pills">
+    <a class="demo-nav-pill" style="background:#f85149" href="/a01">A01</a>
+    <a class="demo-nav-pill" style="background:#d29922" href="/a02">A02</a>
+    <a class="demo-nav-pill" style="background:#8957e5" href="/a03">A03</a>
+    <a class="demo-nav-pill" style="background:#1f6feb" href="/a04">A04</a>
+    <a class="demo-nav-pill" style="background:#f85149" href="/a05">A05</a>
+    <a class="demo-nav-pill" style="background:#da3633" href="/a06">A06</a>
+    <a class="demo-nav-pill active" style="background:#e36209" href="/a07">A07</a>
+    <a class="demo-nav-pill" style="background:#8957e5" href="/a08">A08</a>
+    <a class="demo-nav-pill" style="background:#388bfd" href="/a09">A09</a>
+    <a class="demo-nav-pill" style="background:#3fb950" href="/a10">A10</a>
+  </div>
+</nav>
 <div class="page">
   <div class="demo-header" style="--color:#e36209">
     <span class="demo-badge" style="background:#e36209">A07</span>
