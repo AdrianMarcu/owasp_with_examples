@@ -10,6 +10,7 @@ const VULNS = [
   { code: 'A09', color: '#388bfd', name: 'Logging Failures' },
   { code: 'A10', color: '#3fb950', name: 'Error Handling' },
   { code: 'A11', color: '#bc8cff', name: 'Mass Assignment' },
+  { code: 'A12', color: '#f0883e', name: 'Second-Order Injection' },
 ];
 
 let currentSlide = null;

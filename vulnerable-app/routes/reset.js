@@ -19,6 +19,7 @@ module.exports = function (db, resetLimiter) {
       db.prepare("UPDATE profiles SET name='Alice Smith',email='alice@example.com',bio='Just a regular user',is_admin=0 WHERE user_id=1").run();
       db.prepare("UPDATE profiles SET name='Bob Jones',email='bob@example.com',bio='Consultant',is_admin=0 WHERE user_id=2").run();
       db.prepare("UPDATE profiles SET name='Admin',email='admin@example.com',bio='Site administrator',is_admin=1 WHERE user_id=3").run();
+      db.prepare('DELETE FROM saved_searches').run();
     })();
 
     try { fs.unlinkSync(EXFIL); } catch {}

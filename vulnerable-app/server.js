@@ -32,6 +32,7 @@ app.use('/a08', require('./routes/a08-integrity')(db));
 app.use('/a09', require('./routes/a09-logging')(db));
 app.use('/a10', require('./routes/a10-error-handling')(db));
 app.use('/a11', require('./routes/a11-mass-assignment')(db));
+app.use('/a12', require('./routes/a12-second-order')(db));
 
 if (require.main === module) {
   app.listen(4000, () => console.log('Vulnerable app → http://localhost:4000'));

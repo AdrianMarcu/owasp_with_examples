@@ -65,6 +65,12 @@ function createDatabase(dbPath = path.join(__dirname, 'data.db')) {
       bio      TEXT,
       is_admin INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS saved_searches (
+      id      INTEGER PRIMARY KEY,
+      user_id INTEGER NOT NULL,
+      query   TEXT NOT NULL,
+      UNIQUE(user_id)
+    );
   `);
 
   const count = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
