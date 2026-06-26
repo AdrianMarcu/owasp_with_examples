@@ -57,6 +57,14 @@ function createDatabase(dbPath = path.join(__dirname, 'data.db')) {
       user_id INTEGER,
       details TEXT
     );
+    CREATE TABLE IF NOT EXISTS profiles (
+      id       INTEGER PRIMARY KEY,
+      user_id  INTEGER UNIQUE NOT NULL,
+      name     TEXT NOT NULL,
+      email    TEXT,
+      bio      TEXT,
+      is_admin INTEGER DEFAULT 0
+    );
   `);
 
   const count = db.prepare('SELECT COUNT(*) as c FROM users').get().c;
@@ -81,6 +89,16 @@ function createDatabase(dbPath = path.join(__dirname, 'data.db')) {
 
     db.prepare('INSERT INTO accounts VALUES (1,1,1000.00)').run();
     db.prepare('INSERT INTO accounts VALUES (2,2,500.00)').run();
+  }
+
+  const profileCount = db.prepare('SELECT COUNT(*) as c FROM profiles').get().c;
+  if (profileCount === 0) {
+    db.prepare('INSERT INTO profiles (user_id,name,email,bio,is_admin) VALUES (?,?,?,?,?)')
+      .run(1, 'Alice Smith', 'alice@example.com', 'Just a regular user', 0);
+    db.prepare('INSERT INTO profiles (user_id,name,email,bio,is_admin) VALUES (?,?,?,?,?)')
+      .run(2, 'Bob Jones', 'bob@example.com', 'Consultant', 0);
+    db.prepare('INSERT INTO profiles (user_id,name,email,bio,is_admin) VALUES (?,?,?,?,?)')
+      .run(3, 'Admin', 'admin@example.com', 'Site administrator', 1);
   }
 
   return db;

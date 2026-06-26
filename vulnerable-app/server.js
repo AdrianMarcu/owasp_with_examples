@@ -11,7 +11,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use((req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-user-id');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
@@ -31,6 +31,7 @@ app.use('/reset', require('./routes/reset')(db, makeA07.resetLimiter));
 app.use('/a08', require('./routes/a08-integrity')(db));
 app.use('/a09', require('./routes/a09-logging')(db));
 app.use('/a10', require('./routes/a10-error-handling')(db));
+app.use('/a11', require('./routes/a11-mass-assignment')(db));
 
 if (require.main === module) {
   app.listen(4000, () => console.log('Vulnerable app → http://localhost:4000'));
