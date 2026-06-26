@@ -63,3 +63,5 @@ async function bruteForce(mode) {
 
   return router;
 };
+
+module.exports.resetLimiter = () => loginLimiter.store.hits.clear();
