@@ -4,36 +4,71 @@ module.exports = function () {
   const router = express.Router();
 
   router.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>A10 Demo</title>
-<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px}
-h1{color:#3fb950}button{background:#238636;color:#fff;border:none;padding:8px 16px;
-cursor:pointer;border-radius:4px;margin:4px}input{background:#21262d;color:#e6edf3;
-border:1px solid #30363d;padding:6px;border-radius:4px;width:200px}
-pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px}</style></head>
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A10 — Mishandling of Exceptional Conditions</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
 <body>
-<h1>A10 — Mishandling of Exceptional Conditions</h1>
-<p>Submit a short (invalid) token and see if you get in.</p>
-<p>Token: <input id="t" value="bad">
-<button onclick="access('vulnerable')">Access (Vulnerable)</button>
-<button onclick="access('fixed')" style="background:#1f6feb">Access (Fixed)</button>
-<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button></p>
-<p style="color:#8b949e">Try a short token like "bad" (triggers error) and a long one like "validtoken1234567890"</p>
-<div id="out"></div>
+<div class="page">
+  <div class="demo-header" style="--color:#3fb950">
+    <span class="demo-badge" style="background:#3fb950">A10</span>
+    <span class="demo-title">Mishandling of Exceptional Conditions</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-label">What is it?</div><p id="card-what"></p></div>
+    <div class="card"><div class="card-label">The Attack</div><p id="card-example"></p></div>
+    <div class="card"><div class="card-label">Impact</div><p id="card-impact"></p></div>
+  </div>
+  <div class="demo-section">
+    <div class="demo-section-label">Live Demo — submit a short token and see if you get in</div>
+    <div class="controls">
+      <input class="input" id="t" value="bad" placeholder="Token" style="width:160px">
+      <button class="btn btn-vuln" onclick="access('vulnerable')">Access (Vulnerable)</button>
+      <button class="btn btn-fixed" onclick="access('fixed')">Access (Fixed)</button>
+      <button class="btn btn-reset" onclick="resetDemo()">🔄 Reset Demo</button>
+    </div>
+    <p style="color:#8b949e;font-size:12px;margin-top:8px">Short token (e.g. "bad") triggers the error path. Long token (20+ chars) is valid.</p>
+    <div class="output" id="out" style="margin-top:12px">
+      <div class="output-status"><span class="status-badge" id="status-badge"></span></div>
+      <pre id="output-body"></pre>
+    </div>
+  </div>
+</div>
 <script>
-async function access(mode) {
-  const r = await fetch('/a10/'+mode+'/access', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({token: document.getElementById('t').value})
+fetch('/slides/a10.json').then(r=>r.json()).then(s=>{
+  document.getElementById('card-what').innerHTML=s.explain.what;
+  document.getElementById('card-example').innerHTML=s.explain.example;
+  document.getElementById('card-impact').innerHTML=s.explain.impact;
+});
+function showOutput(status,data){
+  const out=document.getElementById('out');
+  const badge=document.getElementById('status-badge');
+  const body=document.getElementById('output-body');
+  const ok=status>=200&&status<300;
+  badge.textContent=status+' '+(ok?'✓':'✗');
+  badge.className='status-badge '+(ok?'ok':'err');
+  body.textContent=JSON.stringify(data,null,2);
+  out.style.display='block';
+}
+async function resetDemo(){
+  await fetch('/reset',{method:'POST'});
+  document.getElementById('out').style.display='none';
+}
+async function access(endpoint){
+  const r=await fetch('/a10/'+endpoint+'/access',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({token:document.getElementById('t').value})
   });
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p>Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function resetDemo() {
-  await fetch('/reset', { method: 'POST' });
-  document.getElementById('out').innerHTML =
-    '<p style="color:#7ee787">Demo state reset.</p>';
-}
-</script></body></html>`);
+</script>
+</body>
+</html>`);
   });
 
   router.post('/vulnerable/access', (req, res) => {

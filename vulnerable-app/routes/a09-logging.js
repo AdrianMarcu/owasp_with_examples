@@ -9,39 +9,75 @@ module.exports = function (db) {
     ).run(new Date().toISOString(), action, userId, details);
 
   router.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>A09 Demo</title>
-<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px}
-h1{color:#388bfd}button{background:#238636;color:#fff;border:none;padding:8px 16px;
-cursor:pointer;border-radius:4px;margin:4px}
-pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px;max-height:300px;overflow:auto}</style></head>
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A09 — Security Logging Failures</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
 <body>
-<h1>A09 — Security Logging Failures</h1>
-<p>Transfer $100 from account 1 to account 2.</p>
-<button onclick="transfer('vulnerable')">Transfer (Vulnerable)</button>
-<button onclick="transfer('fixed')" style="background:#1f6feb">Transfer (Fixed)</button>
-<button onclick="showLog()">Show Audit Log</button>
-<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
-<div id="out"></div>
+<div class="page">
+  <div class="demo-header" style="--color:#388bfd">
+    <span class="demo-badge" style="background:#388bfd">A09</span>
+    <span class="demo-title">Security Logging Failures</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-label">What is it?</div><p id="card-what"></p></div>
+    <div class="card"><div class="card-label">The Attack</div><p id="card-example"></p></div>
+    <div class="card"><div class="card-label">Impact</div><p id="card-impact"></p></div>
+  </div>
+  <div class="demo-section">
+    <div class="demo-section-label">Live Demo — transfer $100 from account 1 to account 2</div>
+    <div class="controls">
+      <button class="btn btn-vuln" onclick="transfer('vulnerable')">Transfer (Vulnerable)</button>
+      <button class="btn btn-fixed" onclick="transfer('fixed')">Transfer (Fixed)</button>
+      <button class="btn" style="background:#388bfd" onclick="showLog()">Show Audit Log</button>
+      <button class="btn btn-reset" onclick="resetDemo()">🔄 Reset Demo</button>
+    </div>
+    <div class="output" id="out">
+      <div class="output-status"><span class="status-badge" id="status-badge"></span></div>
+      <pre id="output-body"></pre>
+    </div>
+  </div>
+</div>
 <script>
-async function transfer(mode) {
-  const r = await fetch('/a09/'+mode+'/transfer', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({fromId:1, toId:2, amount:100})
+fetch('/slides/a09.json').then(r=>r.json()).then(s=>{
+  document.getElementById('card-what').innerHTML=s.explain.what;
+  document.getElementById('card-example').innerHTML=s.explain.example;
+  document.getElementById('card-impact').innerHTML=s.explain.impact;
+});
+function showOutput(status,data){
+  const out=document.getElementById('out');
+  const badge=document.getElementById('status-badge');
+  const body=document.getElementById('output-body');
+  const ok=status>=200&&status<300;
+  badge.textContent=status+' '+(ok?'✓':'✗');
+  badge.className='status-badge '+(ok?'ok':'err');
+  body.textContent=JSON.stringify(data,null,2);
+  out.style.display='block';
+}
+async function resetDemo(){
+  await fetch('/reset',{method:'POST'});
+  document.getElementById('out').style.display='none';
+}
+async function transfer(endpoint){
+  const r=await fetch('/a09/'+endpoint+'/transfer',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({fromId:1,toId:2,amount:100})
   });
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p>Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function showLog() {
-  const r = await fetch('/a09/audit-log');
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p><strong>Audit Log ('+j.logs.length+' entries)</strong></p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+async function showLog(){
+  const r=await fetch('/a09/audit-log');
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function resetDemo() {
-  await fetch('/reset', { method: 'POST' });
-  document.getElementById('out').innerHTML =
-    '<p style="color:#7ee787">Demo state reset.</p>';
-}
-</script></body></html>`);
+</script>
+</body>
+</html>`);
   });
 
   router.post('/vulnerable/transfer', (req, res) => {

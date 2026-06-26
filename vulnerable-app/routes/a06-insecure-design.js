@@ -4,39 +4,75 @@ module.exports = function (db) {
   const router = express.Router();
 
   router.get('/', (req, res) => {
-    res.send(`<!DOCTYPE html><html><head><title>A06 Demo</title>
-<style>body{font-family:monospace;background:#0d1117;color:#e6edf3;padding:24px}
-h1{color:#da3633}button{background:#238636;color:#fff;border:none;padding:8px 16px;
-cursor:pointer;border-radius:4px;margin:4px}
-pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px}</style></head>
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A06 — Insecure Design</title>
+  <link rel="stylesheet" href="/demo.css">
+</head>
 <body>
-<h1>A06 — Insecure Design (Coupon Abuse)</h1>
-<p>Order #1 | Coupon: SAVE10 (10% off, max 1 use)</p>
-<button onclick="apply('vulnerable')">Apply SAVE10 (Vulnerable)</button>
-<button onclick="apply('fixed')" style="background:#1f6feb">Apply SAVE10 (Fixed)</button>
-<button onclick="getOrder()">Check Order Total</button>
-<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
-<div id="out"></div>
+<div class="page">
+  <div class="demo-header" style="--color:#da3633">
+    <span class="demo-badge" style="background:#da3633">A06</span>
+    <span class="demo-title">Insecure Design</span>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="card-label">What is it?</div><p id="card-what"></p></div>
+    <div class="card"><div class="card-label">The Attack</div><p id="card-example"></p></div>
+    <div class="card"><div class="card-label">Impact</div><p id="card-impact"></p></div>
+  </div>
+  <div class="demo-section">
+    <div class="demo-section-label">Live Demo — Order #1 | Coupon: SAVE10 (10% off, max 1 use)</div>
+    <div class="controls">
+      <button class="btn btn-vuln" onclick="applyCoupon('vulnerable')">Apply SAVE10 (Vulnerable)</button>
+      <button class="btn btn-fixed" onclick="applyCoupon('fixed')">Apply SAVE10 (Fixed)</button>
+      <button class="btn" style="background:#388bfd" onclick="checkOrder()">Check Order Total</button>
+      <button class="btn btn-reset" onclick="resetDemo()">🔄 Reset Demo</button>
+    </div>
+    <div class="output" id="out">
+      <div class="output-status"><span class="status-badge" id="status-badge"></span></div>
+      <pre id="output-body"></pre>
+    </div>
+  </div>
+</div>
 <script>
-async function apply(mode) {
-  const r = await fetch('/a06/'+mode+'/apply-coupon', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({orderId:1, code:'SAVE10'})
+fetch('/slides/a06.json').then(r=>r.json()).then(s=>{
+  document.getElementById('card-what').innerHTML=s.explain.what;
+  document.getElementById('card-example').innerHTML=s.explain.example;
+  document.getElementById('card-impact').innerHTML=s.explain.impact;
+});
+function showOutput(status,data){
+  const out=document.getElementById('out');
+  const badge=document.getElementById('status-badge');
+  const body=document.getElementById('output-body');
+  const ok=status>=200&&status<300;
+  badge.textContent=status+' '+(ok?'✓':'✗');
+  badge.className='status-badge '+(ok?'ok':'err');
+  body.textContent=JSON.stringify(data,null,2);
+  out.style.display='block';
+}
+async function resetDemo(){
+  await fetch('/reset',{method:'POST'});
+  document.getElementById('out').style.display='none';
+}
+async function applyCoupon(endpoint){
+  const r=await fetch('/a06/'+endpoint+'/apply-coupon',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({orderId:1,code:'SAVE10'})
   });
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<p>Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function getOrder() {
-  const r = await fetch('/a06/order/1');
-  const j = await r.json();
-  document.getElementById('out').innerHTML = '<pre>'+JSON.stringify(j,null,2)+'</pre>';
+async function checkOrder(){
+  const r=await fetch('/a06/order/1');
+  const j=await r.json();
+  showOutput(r.status,j);
 }
-async function resetDemo() {
-  await fetch('/reset', { method: 'POST' });
-  document.getElementById('out').innerHTML =
-    '<p style="color:#7ee787">Demo state reset.</p>';
-}
-</script></body></html>`);
+</script>
+</body>
+</html>`);
   });
 
   router.get('/order/:id', (req, res) => {
