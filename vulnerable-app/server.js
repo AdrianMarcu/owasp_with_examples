@@ -1,4 +1,5 @@
 const express = require('express');
+const path = require('path');
 const { createDatabase } = require('./database');
 
 const app = express();
@@ -14,6 +15,9 @@ app.use((req, res, next) => {
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
+
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/slides', express.static(path.join(__dirname, '../presentation/public/slides')));
 
 app.use('/a01', require('./routes/a01-access-control')(db));
 app.use('/a02', require('./routes/a02-misconfiguration')(db));
