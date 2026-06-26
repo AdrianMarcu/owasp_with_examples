@@ -1,0 +1,22 @@
+{
+  "code": "A11",
+  "title": "Mass Assignment",
+  "badgeColor": "#bc8cff",
+  "explain": {
+    "what": "An API endpoint applies all incoming request fields directly to the database — no allowlist. Fields that should be server-controlled, like <code>is_admin</code> or <code>role</code>, become writable by anyone who crafts the right JSON body.",
+    "example": "A profile update sends <code>name</code> and <code>bio</code>. Add <code>\"is_admin\": true</code> to the JSON and the server writes it. There is an auth check — but it never validates <em>which</em> fields are acceptable, or <em>whose</em> profile is being updated.",
+    "impact": "Privilege escalation · account takeover · unauthorized data modification · hard to spot in code review because the auth check is real"
+  },
+  "vulnerable": {
+    "filename": "routes/a11-mass-assignment.js",
+    "annotation": "⚠ Three subtle issues: (1) req.body.user_id controls the update target, (2) is_admin accepted from the client, (3) no ownership check.",
+    "code": "router.put('/vulnerable/profile', (req, res) => {\n  const authUser = parseInt(req.headers['x-user-id']);\n  if (!authUser) return res.status(401).json({ error: 'Not logged in' });\n\n  // ⚠ Issue 1: body controls update target — not the auth session\n  const targetId = req.body.user_id || authUser;\n\n  // ⚠ Issue 2: is_admin arrives from the client alongside normal fields\n  const { name, email, bio, is_admin } = req.body;\n\n  const updates = {};\n  if (name     !== undefined) updates.name     = name;\n  if (email    !== undefined) updates.email    = email;\n  if (bio      !== undefined) updates.bio      = bio;\n  // ⚠ Issue 3: server-controlled flag written from client input\n  if (is_admin !== undefined) updates.is_admin = is_admin ? 1 : 0;\n\n  const setClauses = Object.keys(updates).map(k => `${k} = ?`).join(', ');\n  db.prepare(`UPDATE profiles SET ${setClauses} WHERE user_id = ?`)\n    .run(...Object.values(updates), targetId);\n\n  res.json({ updated: true, target_user_id: targetId });\n});"
+  },
+  "fixed": {
+    "filename": "routes/a11-mass-assignment.js",
+    "annotation": "✅ Allowlist only safe fields (name, bio), always target the authenticated user, never accept server-controlled flags from clients.",
+    "code": "router.put('/fixed/profile', (req, res) => {\n  const authUser = parseInt(req.headers['x-user-id']);\n  if (!authUser) return res.status(401).json({ error: 'Not logged in' });\n\n  // ✅ Allowlist: only name and bio are user-updatable\n  const { name, bio } = req.body;\n  if (!name && !bio)\n    return res.status(400).json({ error: 'Provide name or bio to update' });\n\n  // ✅ Always target the authenticated user's own profile\n  db.prepare(`\n    UPDATE profiles\n    SET name = COALESCE(?, name), bio = COALESCE(?, bio)\n    WHERE user_id = ?\n  `).run(name ?? null, bio ?? null, authUser);\n\n  const profile = db.prepare(\n    'SELECT user_id, name, bio FROM profiles WHERE user_id = ?'\n  ).get(authUser);\n  res.json({ updated: true, profile });\n});"
+  },
+  "demoUrl": "http://localhost:4000/a11",
+  "demoHint": "Can you spot all 3 issues before clicking the attack buttons? Look at: who controls the update target? Which fields are accepted? Is there an ownership check?"
+}
