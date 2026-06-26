@@ -1,8 +1,10 @@
 const express = require('express');
 const crypto = require('crypto');
-const rateLimit = require('express-rate-limit');
+const { rateLimit, MemoryStore } = require('express-rate-limit');
 
 const md5 = s => crypto.createHash('md5').update(s).digest('hex');
+
+const rateLimitStore = new MemoryStore();
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -10,6 +12,7 @@ const loginLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many login attempts. Try again in 15 minutes.' },
+  store: rateLimitStore,
 });
 
 module.exports = function (db) {
@@ -70,4 +73,4 @@ async function resetDemo() {
   return router;
 };
 
-module.exports.resetLimiter = () => loginLimiter.store.hits.clear();
+module.exports.resetLimiter = () => rateLimitStore.resetAll();

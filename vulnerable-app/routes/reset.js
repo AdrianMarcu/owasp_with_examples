@@ -8,13 +8,15 @@ module.exports = function (db, resetLimiter) {
   const router = express.Router();
 
   router.post('/', (req, res) => {
-    db.prepare('UPDATE coupons SET times_used = 0').run();
-    db.prepare('DELETE FROM coupon_usages').run();
-    db.prepare('UPDATE orders SET discount = 0').run();
-    db.prepare('UPDATE accounts SET balance = 1000.00 WHERE id = 1').run();
-    db.prepare('UPDATE accounts SET balance = 500.00 WHERE id = 2').run();
-    db.prepare('DELETE FROM audit_log').run();
-    db.prepare('DELETE FROM users WHERE id > 3').run();
+    db.transaction(() => {
+      db.prepare('UPDATE coupons SET times_used = 0').run();
+      db.prepare('DELETE FROM coupon_usages').run();
+      db.prepare('UPDATE orders SET discount = 0').run();
+      db.prepare('UPDATE accounts SET balance = 1000.00 WHERE id = 1').run();
+      db.prepare('UPDATE accounts SET balance = 500.00 WHERE id = 2').run();
+      db.prepare('DELETE FROM audit_log').run();
+      db.prepare('DELETE FROM users WHERE id > 3').run();
+    })();
 
     try { fs.unlinkSync(EXFIL); } catch {}
 

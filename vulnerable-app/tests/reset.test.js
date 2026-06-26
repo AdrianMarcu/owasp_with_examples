@@ -109,3 +109,15 @@ test('a07 module exports resetLimiter as a function', () => {
   const mod = require('../routes/a07-auth-failures');
   expect(typeof mod.resetLimiter).toBe('function');
 });
+
+test('a07 resetLimiter does not throw when called', () => {
+  const mod = require('../routes/a07-auth-failures');
+  expect(() => mod.resetLimiter()).not.toThrow();
+});
+
+test('POST /reset resets order 2 discount to 0', async () => {
+  db.prepare('UPDATE orders SET discount = 50 WHERE id = 2').run();
+  await request(app).post('/reset');
+  const order = db.prepare('SELECT discount FROM orders WHERE id = 2').get();
+  expect(order.discount).toBe(0);
+});
