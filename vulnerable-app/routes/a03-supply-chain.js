@@ -20,6 +20,7 @@ border-radius:4px;margin-top:12px;overflow:auto;max-height:400px}</style></head>
 <button onclick="purchase('vulnerable')">Track Purchase (Vulnerable)</button>
 <button onclick="purchase('fixed')" style="background:#1f6feb">Track Purchase (Fixed)</button>
 <button onclick="showLog()" style="background:#6e40c9">Show Exfiltration Log</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
 <div id="out"></div>
 <script>
 async function purchase(mode) {
@@ -34,6 +35,11 @@ async function showLog() {
   const r = await fetch('/a03/exfil-log');
   const j = await r.json();
   document.getElementById('out').innerHTML = '<p><strong>Exfiltration Log:</strong></p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

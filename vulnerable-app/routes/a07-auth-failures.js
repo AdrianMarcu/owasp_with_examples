@@ -26,6 +26,7 @@ pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px;max-height
 <p>Simulate a brute-force attack: send 10 login attempts rapidly.</p>
 <button onclick="bruteForce('vulnerable')">Brute Force (Vulnerable)</button>
 <button onclick="bruteForce('fixed')" style="background:#1f6feb">Brute Force (Fixed)</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
 <div id="out"></div>
 <script>
 async function bruteForce(mode) {
@@ -39,6 +40,11 @@ async function bruteForce(mode) {
     results.push({ password: p, status: r.status, body: await r.json() });
   }
   document.getElementById('out').innerHTML = '<p>Mode: <strong>'+mode+'</strong></p><pre>'+JSON.stringify(results,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

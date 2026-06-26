@@ -15,7 +15,8 @@ pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px}</style></
 <p>Submit a short (invalid) token and see if you get in.</p>
 <p>Token: <input id="t" value="bad">
 <button onclick="access('vulnerable')">Access (Vulnerable)</button>
-<button onclick="access('fixed')" style="background:#1f6feb">Access (Fixed)</button></p>
+<button onclick="access('fixed')" style="background:#1f6feb">Access (Fixed)</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button></p>
 <p style="color:#8b949e">Try a short token like "bad" (triggers error) and a long one like "validtoken1234567890"</p>
 <div id="out"></div>
 <script>
@@ -26,6 +27,11 @@ async function access(mode) {
   });
   const j = await r.json();
   document.getElementById('out').innerHTML = '<p>Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

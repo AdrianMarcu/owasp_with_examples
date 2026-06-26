@@ -16,6 +16,7 @@ border:1px solid #30363d;padding:6px;border-radius:4px;width:60px}</style></head
 <p>Invoice ID to fetch: <input id="iid" value="1">
   <button onclick="fetch_('/a01/vulnerable/invoice/'+document.getElementById('iid').value,'vulnerable')">Vulnerable</button>
   <button onclick="fetch_('/a01/fixed/invoice/'+document.getElementById('iid').value,'fixed')" style="background:#1f6feb">Fixed</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
 </p>
 <div id="out"></div>
 <script>
@@ -24,6 +25,11 @@ async function fetch_(url, mode) {
   const j = await r.json();
   document.getElementById('out').innerHTML =
     '<p>Mode: <strong>'+mode+'</strong> | Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

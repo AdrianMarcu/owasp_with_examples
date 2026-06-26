@@ -15,6 +15,7 @@ pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px}</style></
 <button onclick="apply('vulnerable')">Apply SAVE10 (Vulnerable)</button>
 <button onclick="apply('fixed')" style="background:#1f6feb">Apply SAVE10 (Fixed)</button>
 <button onclick="getOrder()">Check Order Total</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
 <div id="out"></div>
 <script>
 async function apply(mode) {
@@ -29,6 +30,11 @@ async function getOrder() {
   const r = await fetch('/a06/order/1');
   const j = await r.json();
   document.getElementById('out').innerHTML = '<pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

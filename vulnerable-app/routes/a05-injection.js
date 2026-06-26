@@ -14,7 +14,8 @@ pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px;overflow:a
 <h1>A05 — SQL Injection</h1>
 <p>Search: <input id="q" value="' OR '1'='1">
 <button onclick="search('vulnerable')">Search (Vulnerable)</button>
-<button onclick="search('fixed')" style="background:#1f6feb">Search (Fixed)</button></p>
+<button onclick="search('fixed')" style="background:#1f6feb">Search (Fixed)</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button></p>
 <div id="out"></div>
 <script>
 async function search(mode) {
@@ -25,6 +26,11 @@ async function search(mode) {
     '<p>Mode: <strong>'+mode+'</strong> — '+(j.results ? j.results.length : 0)+' result(s)</p>' +
     (j.query ? '<p>SQL: <code>'+j.query+'</code></p>' : '') +
     '<pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

@@ -14,6 +14,7 @@ border-radius:4px;margin-top:12px;overflow:auto;max-height:400px}</style></head>
 <p>Trigger an internal server error and see what leaks.</p>
 <button onclick="hit('/a02/vulnerable/data','vulnerable')">Vulnerable</button>
 <button onclick="hit('/a02/fixed/data','fixed')" style="background:#1f6feb">Fixed</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
 <div id="out"></div>
 <script>
 async function hit(url, mode) {
@@ -21,6 +22,11 @@ async function hit(url, mode) {
   const j = await r.json();
   document.getElementById('out').innerHTML =
     '<p>Mode: <strong>'+mode+'</strong> | Status: '+r.status+'</p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });

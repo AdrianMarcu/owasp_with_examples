@@ -20,6 +20,7 @@ pre{background:#161b22;padding:12px;border-radius:4px;margin-top:12px;max-height
 <button onclick="transfer('vulnerable')">Transfer (Vulnerable)</button>
 <button onclick="transfer('fixed')" style="background:#1f6feb">Transfer (Fixed)</button>
 <button onclick="showLog()">Show Audit Log</button>
+<button onclick="resetDemo()" style="background:#6e40c9">🔄 Reset Demo</button>
 <div id="out"></div>
 <script>
 async function transfer(mode) {
@@ -34,6 +35,11 @@ async function showLog() {
   const r = await fetch('/a09/audit-log');
   const j = await r.json();
   document.getElementById('out').innerHTML = '<p><strong>Audit Log ('+j.logs.length+' entries)</strong></p><pre>'+JSON.stringify(j,null,2)+'</pre>';
+}
+async function resetDemo() {
+  await fetch('/reset', { method: 'POST' });
+  document.getElementById('out').innerHTML =
+    '<p style="color:#7ee787">Demo state reset.</p>';
 }
 </script></body></html>`);
   });
